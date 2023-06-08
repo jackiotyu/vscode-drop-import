@@ -4,6 +4,14 @@ import fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
     const uriListMime = 'text/uri-list';
+
+    function checkSameDir(from: string, to: string) {
+        const fromDir = path.parse(from).dir.trim();
+        const toDir = path.parse(to).dir.trim();
+
+        return from === to || fromDir.includes(toDir);
+    }
+
     class DropEditorProvider implements vscode.DocumentDropEditProvider {
         async provideDocumentDropEdits(
             document: vscode.TextDocument,
@@ -23,7 +31,6 @@ export function activate(context: vscode.ExtensionContext) {
                 try {
                     let uri = vscode.Uri.parse(resource);
                     if(uri.fsPath === docPath) continue;
-                    // if(fs.statSync(uri.fsPath).isDirectory()) continue;
                     uris.push(uri);
                 } catch (err){
                     console.log(err, 'err');
@@ -35,8 +42,9 @@ export function activate(context: vscode.ExtensionContext) {
             let textList: string[] = [];
             uris.forEach((uri, index) => {
                 let filePath = path.relative(path.dirname(docPath), uri.fsPath);
-                let basePath = '.' + path.sep + filePath.slice(0, filePath.lastIndexOf('.'));
-                textList.push(`import { $\{${index + 1}} } from "${basePath}"`);
+                const prefix = checkSameDir(uri.fsPath, docPath) ? '.' + path.sep : '';
+                let basePath = prefix + filePath;// .slice(0, filePath.lastIndexOf('.'));
+                textList.push(`import { $\{${index + 1}} } from "${basePath.trim()}"`);
             });
 
             const snippet = new vscode.SnippetString(textList.join('\n'));
@@ -45,7 +53,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
     const selector: vscode.DocumentSelector = { language: 'typescript' };
-    context.subscriptions.push(vscode.languages.registerDocumentDropEditProvider(selector, new DropEditorProvider()));
+    context.subscriptions.push(
+        vscode.languages.registerDocumentDropEditProvider(selector, new DropEditorProvider()),
+    );
 }
 
 export function deactivate() {}
