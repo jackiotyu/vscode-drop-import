@@ -13,8 +13,45 @@
     "onLanguage:typescript"
   ],
   "main": "./dist/extension.js",
-  "contributes": {},
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "easy-import",
+          "icon": "images/icon.svg",
+          "title": "easy import"
+        }
+      ]
+    },
+    "views": {
+      "easy-import": [
+        {
+          "id": "easy-import.searchView",
+          "name": "search",
+          "type": "webview",
+          "when": "activeEditor && (resourceExtname == .js || resourceExtname == .ts)"
+        },
+        {
+          "id": "easy-import.symbolSearch",
+          "name": "symbol search",
+          "when": "resourceExtname == .js || resourceExtname == .ts"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "easy-import.symbolSearch",
+        "when": "!activeEditor",
+        "contents": "please open `js/ts` file first \n [open file](command:workbench.action.quickOpen)"
+      }
+    ]
+  },
   "scripts": {
+    "install:all": "yarn install && yarn --cwd ./webview-ui/ install",
+    "start:webview": "yarn --cwd ./webview-ui/ start",
+    "build:webview": "yarn --cwd ./webview-ui/ build",
+    "package:all": "concurrently \"yarn:package\" \"yarn:build:webview\"",
+    "watch:all": "concurrently \"yarn:watch\" \"yarn:start:webview\"",
     "vscode:prepublish": "yarn run package",
     "compile": "webpack",
     "watch": "webpack --watch",
@@ -26,19 +63,22 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.78.0",
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
+    "@types/vscode": "^1.78.0",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
+    "@vscode/test-electron": "^2.3.0",
     "eslint": "^8.39.0",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
-    "typescript": "^5.0.4",
     "ts-loader": "^9.4.2",
+    "typescript": "^5.0.4",
     "webpack": "^5.81.0",
-    "webpack-cli": "^5.0.2",
-    "@vscode/test-electron": "^2.3.0"
+    "webpack-cli": "^5.0.2"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0"
   }
 }
